@@ -133,6 +133,9 @@ class BaseMobility : public BaseModule
     /** @brief Delete dynamically allocated objects*/
     virtual void finish(){};
 
+    double getX() { return move.startPos.getX(); }
+    double getY() { return move.startPos.getY(); }
+
   protected:
     /** @brief Called upon arrival of a self messages*/
     virtual void handleSelfMsg( cMessage* );
