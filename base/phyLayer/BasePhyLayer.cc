@@ -98,8 +98,8 @@ void BasePhyLayer::initialize(int stage) {
 		initializeDecider(readPar("decider", (cXMLElement*)0));
 
 		//initialise timer messages
-		radioSwitchingOverTimer = new cMessage(0, RADIO_SWITCHING_OVER);
-		txOverTimer = new cMessage(0, TX_OVER);
+		radioSwitchingOverTimer = new cMessage("RadioSwitchingOver", RADIO_SWITCHING_OVER);
+		txOverTimer = new cMessage("RadioTxOver", TX_OVER);
 
 	}
 }
@@ -206,6 +206,11 @@ void BasePhyLayer::initializeAnalogueModels(cXMLElement* xmlConfig) {
 	* first of all, attach the AnalogueModel that represents the RadioState
 	* to the AnalogueModelList as first element.
 	*/
+
+	/*** This section is commented out by CSEM - Jerome Rousselot.
+	 * Useless code because radio state is managed at the decider level.
+	 * The RSAM doesn't make sense physically and doesn't reduce memory footprint either.
+	 * It is also difficult to control when subclassing Radio.
 	std::string s("RadioStateAnalogueModel");
 	ParameterMap p;
 
@@ -217,7 +222,7 @@ void BasePhyLayer::initializeAnalogueModels(cXMLElement* xmlConfig) {
 	}
 	analogueModels.push_back(newAnalogueModel);
 
-
+	*/
 	if(xmlConfig == 0) {
 		ev << "No analogue models configuration file specified." << endl;
 		return;
@@ -464,7 +469,7 @@ AirFrame *BasePhyLayer::encapsMsg(cPacket *macPkt)
 	s->setMove(move);
 
 	// create the new AirFrame
-	AirFrame* frame = new AirFrame(0, AIR_FRAME);
+	AirFrame* frame = new AirFrame("airframe", AIR_FRAME);
 
 	// set the members
 	assert(s->getSignalLength() > 0);
@@ -521,7 +526,7 @@ void BasePhyLayer::handleSelfMessage(cMessage* msg) {
 	//transmission over
 	case TX_OVER:
 		assert(msg == txOverTimer);
-		sendControlMsg(new cMessage(0, TX_OVER));
+		sendControlMsg(new cMessage("TxOver", TX_OVER));
 		break;
 
 	//radio switch over
@@ -646,7 +651,7 @@ int BasePhyLayer::getRadioState() {
 void BasePhyLayer::finishRadioSwitching()
 {
 	radio->endSwitch(simTime());
-	sendControlMsg(new cMessage(0, RADIO_SWITCHING_OVER));
+	sendControlMsg(new cMessage("RadioSwitchingOver", RADIO_SWITCHING_OVER));
 }
 
 simtime_t BasePhyLayer::setRadioState(int rs) {
