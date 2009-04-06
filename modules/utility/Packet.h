@@ -33,7 +33,7 @@
 
 class  Packet : public BBItem
 {
-    BBITEM_METAINFO(BBItem);
+    BBITEM_METAINFO(BBItem)
 
 protected:
     /** @brief number of packets generated. */
@@ -64,6 +64,13 @@ public:
             nbPacketsSent = n;
 	}
 
+    void setHost(int h) {
+    	host = h;
+    }
+
+    int getHost() {
+    	return host;
+    }
 
     bool isSent() const {
     	return sent;
