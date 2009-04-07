@@ -9,7 +9,7 @@ MAKEMAKE=opp_makemake $(MMOPT)
 
 all:
 	cd base && $(MAKEMAKE) -f --deep --make-so -o miximbase -O out -L../out/'$$(CONFIGNAME)'/modules
-	cd modules && $(MAKEMAKE) -f --deep --make-so -o miximmodules -X channel -O out -I../base/messages -I../base/utils -I../base/timers -I../base/modules -I../base/connectionManager -I../base/phyLayer -L../out/'$$(CONFIGNAME)'/miximbase -lmiximbase
+	cd modules && $(MAKEMAKE) -f --deep --make-so -o miximmodules -X channel -X localization -X phyOld -O out -I../base/messages -I../base/utils -I../base/timers -I../base/modules -I../base/connectionManager -I../base/phyLayer -L../out/'$$(CONFIGNAME)'/base -lmiximbase
 	#cd base && $(MAKEMAKE) -f --deep --make-so -o miximbase -O out -L../out/'$$(CONFIGNAME)'/modules
-	cd tests && $(MAKEMAKE) -f --deep --make-so -o testSuite -O out -I../core/basicMessages -I../core/blackboard -I../core/basicModules -I../core/channelControl -I../core/utils -I../contrib/applLayer -I../contrib/messages -I../contrib/utils -I../contrib/nic/macLayer -I../contrib/nic/radios -I../contrib/netwLayer -L../out/'$$(CONFIGNAME)'/contrib -L../out/'$$(CONFIGNAME)'/core -lmfcontrib
+	cd tests && $(MAKEMAKE) -f --deep --make-so -o testSuite -O out -I../core/basicMessages -I../core/blackboard -I../core/basicModules -I../core/channelControl -I../core/utils -I../contrib/applLayer -I../contrib/messages -I../contrib/utils -I../contrib/nic/macLayer -I../contrib/nic/radios -I../contrib/netwLayer -L../out/'$$(CONFIGNAME)'/contrib -L../out/'$$(CONFIGNAME)'/modules -lmiximmodules
 	$(MAKEMAKE) -f --nolink -O out -d modules -d base -X tests -X. -L./out/'$$(CONFIGNAME)'/modules -L./out/'$$(CONFIGNAME)'/base
