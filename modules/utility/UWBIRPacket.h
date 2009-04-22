@@ -16,8 +16,8 @@
  * part of:     framework implementation developed by tkn
  **************************************************************************/
 
-#ifndef BBPACKET_H
-#define BBPACKET_H
+#ifndef BBUWBIRPACKET_H
+#define BBUWBIRPACKET_H
 
 #include <omnetpp.h>
 #include "ImNotifiable.h"
@@ -31,54 +31,44 @@
  * @sa Blackboard
  */
 
-class  Packet : public BBItem
+class  UWBIRPacket : public BBItem
 {
     BBITEM_METAINFO(BBItem)
 
 protected:
     /** @brief number of packets generated. */
+    long nbSyncAttempts;
+    long nbSyncSuccesses;
     long nbPacketsReceived;
-    long nbPacketsSent;
-    bool sent;
-    int host;
 
 public:
 
     /** @brief Constructor*/
-    Packet() : BBItem(), nbPacketsReceived(0), nbPacketsSent(0), sent(true), host(0) {
-    };
+    UWBIRPacket() : BBItem(), nbSyncAttempts(0), nbSyncSuccesses(0), nbPacketsReceived(0) { };
 
 
     double getNbPacketsReceived() const  {
         return nbPacketsReceived;
     }
 
-    double getNbPacketsSent() const  {
-            return nbPacketsSent;
-	}
-
     void setNbPacketsReceived(int n)  {
         nbPacketsReceived = n;
     }
 
-    void setNbPacketsSent(int n)  {
-            nbPacketsSent = n;
+    double getNbSyncAttempts() const  {
+            return nbSyncAttempts;
 	}
 
-    void setHost(int h) {
-    	host = h;
+    void setNbSyncAttempts(long n)  {
+            nbSyncAttempts = n;
+	}
+
+    long getNbSyncSuccesses() {
+    	return nbSyncSuccesses;
     }
 
-    int getHost() {
-    	return host;
-    }
-
-    bool isSent() const {
-    	return sent;
-    }
-
-    void setPacketSent(bool isSent) {
-    	sent = isSent;
+    void setNbSyncSuccesses(long n) {
+    	nbSyncSuccesses = n;
     }
 
     /** @brief Enables inspection */
