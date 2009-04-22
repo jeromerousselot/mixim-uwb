@@ -86,6 +86,12 @@ class DeciderToPhyInterface
 		 * handled that message.
 		 */
 		virtual void cancelScheduledMessage(cMessage* msg) = 0;
+
+		/*
+		 * @brief Obtains a pointer to the host blackboard module so that the
+		 * decider can publish information directly.
+		 */
+		virtual const BaseUtility* getUtility() { };
 };
 
 #endif /*DECIDER_TO_PHY_INTERFACE_H_*/
