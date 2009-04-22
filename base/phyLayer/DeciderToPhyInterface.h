@@ -91,7 +91,7 @@ class DeciderToPhyInterface
 		 * @brief Obtains a pointer to the host blackboard module so that the
 		 * decider can publish information directly.
 		 */
-		virtual const BaseUtility* getUtility() { };
+		virtual BaseUtility* getUtility() { return 0; };
 };
 
 #endif /*DECIDER_TO_PHY_INTERFACE_H_*/
