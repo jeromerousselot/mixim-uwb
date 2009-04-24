@@ -38,6 +38,7 @@ class  Packet : public BBItem
 protected:
     /** @brief number of packets generated. */
     long nbPacketsReceived;
+    long nbPacketsReceivedNoRS;
     long nbPacketsSent;
     bool sent;
     int host;
@@ -45,11 +46,14 @@ protected:
 public:
 
     /** @brief Constructor*/
-    Packet() : BBItem(), nbPacketsReceived(0), nbPacketsSent(0), sent(true), host(0) {
+    Packet() : BBItem(), nbPacketsReceived(0), nbPacketsReceivedNoRS(0), nbPacketsSent(0), sent(true), host(0) {
     };
 
-
     double getNbPacketsReceived() const  {
+        return nbPacketsReceived;
+    }
+
+    double getNbPacketsReceivedNoRS() const  {
         return nbPacketsReceived;
     }
 
@@ -59,6 +63,10 @@ public:
 
     void setNbPacketsReceived(int n)  {
         nbPacketsReceived = n;
+    }
+
+    void setNbPacketsReceivedNoRS(int n)  {
+        nbPacketsReceivedNoRS = n;
     }
 
     void setNbPacketsSent(int n)  {
