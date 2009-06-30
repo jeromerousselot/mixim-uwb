@@ -56,15 +56,10 @@ void UWBIRStochasticPathlossModel::filterSignal(Signal& s) {
 		rcvCoord = move->getPositionAt(s.getSignalStart());
 
 		distance = rcvCoord.distance(srcCoord);
-		/*
-		 srcPosX.record(srcCoord.getX());
-		 srcPosY.record(srcCoord.getY());
-		 dstPosX.record(rcvCoord.getX());
-		 dstPosY.record(rcvCoord.getY());
-		 distances.record(distance);
-		 */
+
 		// Compute pathloss
 		double attenuation = getGhassemzadehPathloss(distance);
+
 		// Store scalar mapping
 		attMapping->setValue(arg, attenuation);
 		s.addAttenuation(attMapping);

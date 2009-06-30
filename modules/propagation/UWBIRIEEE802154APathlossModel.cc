@@ -155,7 +155,7 @@ void UWBIRIEEE802154APathlossModel::filterSignal(Signal& s) {
     // We create a new "fake" txPower to add multipath taps
     // and then attenuation is applied to all pulses.
 
-	// *** Taps
+	// Power Delay Profile realization
 
     txPower = s.getTransmissionPower();
     newTxPower = new TimeMapping<Linear>(); //dynamic_cast<TimeMapping<Linear>*> (txPower->clone()); // create working copy
@@ -182,28 +182,16 @@ void UWBIRIEEE802154APathlossModel::filterSignal(Signal& s) {
     delete iter;
     s.setTransmissionPower(newTxPower);
 
-    //*** Pathloss
-    //TODO: refactor to pathloss.h or ieee....h
-    //double Gtx = 1, Grx = 1;
-    double ntx = 1, nrx = 1;
-    //double fc = 4492.8; // mandatory band 3, center frequency, MHz
-    double d0 = 1;
 
     // compute distance
     Move srcMove = s.getMove();
     Coord srcCoord, rcvCoord;
-    double distance = 0;
+    distance = 0;
     srcCoord = srcMove.getPositionAt(s.getSignalStart());
     rcvCoord = move.getPositionAt(s.getSignalStart());
     distance = rcvCoord.distance(srcCoord);
 
-    // compute attenuation
-    //double attenuation = ntx * nrx * cfg.PL0 / pow(distance / d0, cfg.n);
-
-
-    double attenuation = 0.5 * ntx * nrx * cfg.PL0 / pow(distance / d0, cfg.n);
-    //attenuation = attenuation / pow(fc, 2*(cfg.kappa+1));
-    //attenuation = attenuation * (pow(fc+0.25E9,1-2*(cfg.kappa+1))-pow(fc-0.25E9,1-2*(cfg.kappa+1)) );
+    double attenuation = getPathloss(fc, BW);
     // create mapping
     SimpleTimeConstMapping* attMapping = new SimpleTimeConstMapping(
     		attenuation, s.getSignalStart(), s.getSignalStart()+s.getSignalLength());
@@ -239,7 +227,6 @@ void UWBIRIEEE802154APathlossModel::addEchoes(simtime_t pulseStart) {
             // modify newTxPower
             // we add three points for linear interpolation
         	// we set the start and end point before adding the new value for correct interpolation
-        	// TODO: add phase information
             arg.setTime(pulseStart + clusterStart + tau_kl);
             double pValueStart = 0; // newTxPower->getValue(arg);
             arg.setTime(pulseStart + clusterStart + tau_kl + IEEE802154A::mandatory_pulse);
@@ -250,12 +237,7 @@ void UWBIRIEEE802154APathlossModel::addEchoes(simtime_t pulseStart) {
 
             arg.setTime(pulseStart + clusterStart + tau_kl + IEEE802154A::mandatory_pulse);
             newTxPower->setValue(arg, pValueEnd);
-			/*
-            double phase = uniform(-1, 1);
-            if(firstTap) {
-            	phase = 1;
-            	firstTap = false;
-            }*/
+
             if(firstTap) {
             	mfactor = cfg.m_0;
             } else {
@@ -265,16 +247,7 @@ void UWBIRIEEE802154APathlossModel::addEchoes(simtime_t pulseStart) {
             }
             arg.setTime(pulseStart + clusterStart + tau_kl + IEEE802154A::mandatory_pulse / 2);
             double finalTapEnergy = tapEnergy * pulseEnergy;
-            /*
-            if(doSmallScaleShadowing) {
-            	double tmp = sqrt(mfactor*mfactor-mfactor);
-            	double riceK = tmp/(mfactor-tmp);
-            	//dw;
-            	finalTapEnergy = finalTapEnergy * 10^(mfactor/10);
-            }
-            */
             newTxPower->setValue(arg, finalTapEnergy);
-
 
             // Update values for next iteration
             double mix1 = exponential(1 / cfg.lambda_1);
@@ -297,6 +270,14 @@ void UWBIRIEEE802154APathlossModel::addEchoes(simtime_t pulseStart) {
         Omega_l = pow(10, (10 * log(exp(expArg.dbl())) + Mcluster) / 10);
         moreTaps = true;
     }
+}
+
+double UWBIRIEEE802154APathlossModel::getPathloss(double fc, double BW) {
+	double pathloss = 0.5; // "antenna attenuation factor"
+	pathloss = pathloss * cfg.PL0;  // pathloss at reference distance
+	pathloss = pathloss * ntx * nrx; // antenna effects
+	pathloss = pathloss / pow(distance/d0, cfg.n); // distance
+	return pathloss;
 }
 
 double UWBIRIEEE802154APathlossModel::Rayleigh(double param) {

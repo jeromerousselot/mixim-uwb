@@ -39,6 +39,8 @@
 
 using namespace std;
 
+#define PI 3.1415926
+
 class UWBIRPhyLayer;
 
 
@@ -60,9 +62,10 @@ public:
 	// Boltzmann constant multiplied by 500 MHz (signal bandwidth) in mJ.K-1 !
 	const static double kB500M = 5 * 1.38E-12; // mW/K
 	const static int temperature = 293; // 20 Celsius degrees
-	const static double noiseLevel = 6.29 * 1E-9; // -174 + 5 + 10logB in mW
-	const static double Vtx = 0.129; // Voltage transmitted
+	const static double noiseVariance = 404.34E-12;
+	const static double Ptx = 37.06E-6; // radiated power at origin (-41.3 dBm/MHz over 500 MHz in Watts)
 	const static double resistor = 50; // 50 Ohms
+	const static double lambda = 0.04;// center frequency wavelength
 	UWBIREnergyDetectionDeciderV2(DeciderToPhyInterface* iface,
 			UWBIRPhyLayer* _uwbiface,
 			double _syncThreshold, bool _syncAlwaysSucceeds, bool _stats,
@@ -72,13 +75,6 @@ public:
 				nbSuccessfulSyncs(0), nbSymbols(0), syncThreshold(_syncThreshold),
 				syncAlwaysSucceeds(_syncAlwaysSucceeds), uwbiface(_uwbiface), tracking(0),
 				channelSensing(false), synced(false) {
-
-		zerosEnergies.setName("ZerosEnergies");
-		onesEnergies.setName("OnesEnergies");
-		signalLengths.setName("signalLengths");
-		receivedPulses.setName("receivedPulses");
-		syncThresholds.setName("syncThresholds");
-		timeHoppings.setName("timeHoppings");
 
 		utility = iface->getUtility();
 		catUWBIRPacket = utility->getCategory(&packet);
@@ -106,14 +102,11 @@ public:
 	};
 
 	double getNoiseValue() {
-		 return normal(0, noiseLevel);
+		 return normal(0, noiseVariance);
 	}
 
 protected:
 	map<Signal*, int> currentSignals;
-	cOutVector zerosEnergies, onesEnergies, thresholds, signalLengths,
-			receivedPulses;
-	cOutVector syncThresholds, timeHoppings;
 
 	UWBIRPhyLayer* uwbiface;
 	Signal* tracking;
@@ -142,7 +135,7 @@ protected:
 			handleSignalOver(map<Signal*, int>::iterator& it, AirFrame* frame);
 	// first value is energy from signal, other value is total window energy
 	pair<double, double> integrateWindow(int symbol, simtime_t now,
-			simtime_t burst, double noiseLevel, Signal* signal);
+			simtime_t burst, Signal* signal);
 
 	simtime_t handleChannelSenseRequest(ChannelSenseRequest* request);
 

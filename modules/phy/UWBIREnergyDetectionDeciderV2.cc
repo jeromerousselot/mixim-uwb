@@ -119,7 +119,6 @@ bool UWBIREnergyDetectionDeciderV2::attemptSync(Signal* s) {
 	Argument posFirstPulse(IEEE802154A::tFirstSyncPulseMax);
 	mIt->jumpTo(posFirstPulse);
 	snrValue = std::abs(mIt->getValue()/getNoiseValue());
-    syncThresholds.record(snrValue);
     if(snrValue > syncThreshold) {
     	return true;
     } else {
@@ -178,27 +177,6 @@ void UWBIREnergyDetectionDeciderV2::decodePacket(Signal* signal,
 	now = IEEE802154A::mandatory_preambleLength + IEEE802154A::mandatory_pulse / 2;
 	std::pair<double, double> energyZero, energyOne;
 
-	// debugging information (start)
-	if (trace) {
-		simtime_t prev = 0;
-		ConstMappingIterator* iteratorDbg = signalPower->createConstIterator();
-		int nbItems = 0;
-		iteratorDbg->jumpToBegin();
-		while (iteratorDbg->hasNext()) {
-			nbItems = nbItems + 1;
-			iteratorDbg->next();
-
-			receivedPulses.recordWithTimestamp(signal->getSignalStart()
-												+ iteratorDbg->getPosition().getTime(),
-											   signalPower->getValue(iteratorDbg->getPosition()));
-			prev = iteratorDbg->getPosition().getTime();
-			simtime_t t = signal->getSignalStart() + prev;
-		}
-		delete iteratorDbg;
-	}
-	// debugging information (end)
-
-
 	// Loop to decode each bit value
 	for (int symbol = 0; IEEE802154A::mandatory_preambleLength + symbol
 			* aSymbol < signal->getSignalLength(); symbol++) {
@@ -206,19 +184,16 @@ void UWBIREnergyDetectionDeciderV2::decodePacket(Signal* signal,
 		int hoppingPos = IEEE802154A::getHoppingPos(symbol);
 		int decodedBit;
 
-		if(trace) {
-		  timeHoppings.record(hoppingPos);
-		}
 		if (stats) {
 			nbSymbols = nbSymbols + 1;
 		}
 
 		// sample in window zero
 		now = now + IEEE802154A::getHoppingPos(symbol)*IEEE802154A::mandatory_burst;
-		energyZero = integrateWindow(symbol, now, burst, noiseLevel, signal);
+		energyZero = integrateWindow(symbol, now, burst, signal);
 		// sample in window one
 		now = now + shift;
-		energyOne = integrateWindow(symbol, now, burst, noiseLevel, signal);
+		energyOne = integrateWindow(symbol, now, burst, signal);
 
 		if (energyZero.second > energyOne.second) {
 		  decodedBit = 0;
@@ -235,7 +210,7 @@ void UWBIREnergyDetectionDeciderV2::decodePacket(Signal* signal,
 }
 
 pair<double, double> UWBIREnergyDetectionDeciderV2::integrateWindow(int symbol,
-		simtime_t now, simtime_t burst, double noiseLevel, Signal* signal) {
+		simtime_t now, simtime_t burst, Signal* signal) {
 	std::pair<double, double> energy;
 	energy.first = 0; // stores energy contribution from tracked signal
 	energy.second = 0; // stores total captured window energy
@@ -251,31 +226,44 @@ pair<double, double> UWBIREnergyDetectionDeciderV2::integrateWindow(int symbol,
 	// we sample one point per pulse
 	// caller has already set our time reference ("now") at the peak of the pulse
 	for (; now < windowEnd; now += IEEE802154A::mandatory_pulse) {
-		double sampling = getNoiseValue();
-		double signalValue = 0;
-		arg.setTime(now);
+		double signalValue = 0;	// electric field from tracked signal [V/m²]
+		double Efield = 0;		// electric field at antenna = combination of all arriving electric fields [V/m²]
+		double vEfield = 0;		// voltage at antenna caused by electric field Efield [V]
+		double vmeasured = 0;	// voltage measured by energy-detector [V], including thermal noise
+		double vmeasured_square = 0; // to the square [V²]
+		arg.setTime(now);		// loop variable: begin by considering the first pulse
 		int currSig = 0;
+
 		// consider all interferers at this point in time
 		for (airFrameIter = airFrameVector.begin(); airFrameIter
 				!= airFrameVector.end(); ++airFrameIter) {
-
 			Signal & aSignal = (*airFrameIter)->getSignal();
 			ConstMapping* currPower = aSignal.getReceivingPower();
 			arg.setTime(now + offsets.at(currSig));
-			double measure = currPower->getValue(arg)*Vtx; // de-normalize
+			double measure = currPower->getValue(arg)*Ptx; // de-normalize (this value should be in AirFrame or in Signal, to be set at run-time)
+			measure = sqrt(120*PI*measure); // get electric field
 			if (currPower == signalPower) {
-				signalValue += measure;
-				sampling += measure;
+				signalValue = measure;
+				Efield = Efield + measure;
 			} else {
-				// random phase for interferer
-				sampling += measure * intuniform(-1, 1);
+				// take a random point within pulse envelope for interferer
+				Efield = Efield + measure * intuniform(-1, 1);
 			}
 			++currSig;
 		}
-		// signal converted to Watt
-		energy.first = pow(signalValue, 2)/resistor;
+
+		// convert from resulting electric field to antenna voltage
+		vEfield = pow(Efield, 2) / 50;
+		vEfield = vEfield * pow(lambda, 2) /(120*PI*4*PI);
+		vEfield = sqrt(vEfield);
+		// add noise
+		double vThermalNoise = getNoiseValue();
+		vmeasured = vEfield + vThermalNoise;
+		// square it
+		vmeasured_square = pow(vmeasured, 2);
 		// signal + interference + noise
-		energy.second = energy.second + pow(sampling, 2)/resistor;
+		energy.second = energy.second + vmeasured_square;
+
 	} // consider next point in time
 
 	return energy;
@@ -294,5 +282,3 @@ simtime_t UWBIREnergyDetectionDeciderV2::handleChannelSenseRequest(
 		return -1; //phy->getSimTime() + request->getSenseDuration();
 	}
 }
-
-
