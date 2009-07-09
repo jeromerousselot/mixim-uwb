@@ -1,0 +1,49 @@
+MiXiM-UWB
+---------
+
+This is a branch of the MiXiM modeling framework that
+implements a symbol-level Ultra Wideband Impulse Radio
+(UWB-IR) PHY layer.
+
+It aims to implement all mandatory features of the
+UWB PHY specified in the IEEE 802.15.4A-2007 standard.
+
+Most of the IEEE 802.15.4A channel models have been
+implemented 
+(see modules/propagation/UWBIRIEEE802154APathlossModel.h).
+
+A simple energy detection receiver has been implemented
+in modules/phy/UWBIREnergyDetectionDeciderV2.h/cc.
+
+The main module is modules/phy/UWBIRPhyLayer.
+
+An example omnet++ configuration file that computes the
+bit error rate as a function of distance for various
+channel models is given in
+examples/ieee802154a/omnetpp.ini.
+
+After running it, you can open the Omnet++ analysis file
+BERDistance.anf in the same directory to interpret the
+results.
+
+This is a work in progress. Bug fixes and enhancements
+are regularly pushed to the git repository at
+http://github.com/jeromerousselot/mixim-uwb/tree/master
+
+
+Please post your questions to the omnet++ mailing list at
+http://groups.google.com/group/omnetpp?pli=1
+
+The following publication gives some information on the model:
+A High-Precision Ultra Wideband Impulse Radio Physical Layer
+Model for Network Simulation, Jérôme Rousselot, Jean-Dominique 
+Decotignie, Second International Omnet++ Workshop,Simu'TOOLS, 
+Rome, 6 March 2009.
+
+
+Jerome Rousselot <jerome.rousselot@csem.ch>
+ 
+
+
+
+
