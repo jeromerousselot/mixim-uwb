@@ -1,5 +1,2 @@
-base
-doc
-examples
-modules
-tests
+examples/veins
+src/veins
